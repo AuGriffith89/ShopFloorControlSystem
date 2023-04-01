@@ -77,6 +77,7 @@
             applicationSettingsButton.TabIndex = 2;
             applicationSettingsButton.Text = "Application Settings";
             applicationSettingsButton.UseVisualStyleBackColor = true;
+            applicationSettingsButton.Click += applicationSettingsButton_Click;
             // 
             // MainSelectionForm
             // 
@@ -88,6 +89,7 @@
             Controls.Add(userSettingsButton);
             Controls.Add(freeFormButton);
             Name = "MainSelectionForm";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Main Selection";
             ResumeLayout(false);
         }
