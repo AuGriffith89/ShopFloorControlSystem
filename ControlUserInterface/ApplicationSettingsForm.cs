@@ -16,7 +16,7 @@ namespace ControlUserInterface
     public partial class ApplicationSettingsForm : Form
     {
         private IControllerRequester callingForm;
-        readonly ControllerModel controller = new ControllerModel();
+        private ControllerModel controller = new ControllerModel();
 
         public ApplicationSettingsForm(IControllerRequester caller)
         {

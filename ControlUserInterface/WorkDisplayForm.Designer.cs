@@ -64,7 +64,6 @@
             // 
             // measurementValueLabel
             // 
-            measurementValueLabel.AutoSize = true;
             measurementValueLabel.Font = new Font("Segoe UI", 125.25F, FontStyle.Regular, GraphicsUnit.Point);
             measurementValueLabel.ForeColor = SystemColors.MenuHighlight;
             measurementValueLabel.Location = new Point(83, 140);
@@ -72,6 +71,7 @@
             measurementValueLabel.Size = new Size(489, 221);
             measurementValueLabel.TabIndex = 3;
             measurementValueLabel.Text = "88.88";
+            measurementValueLabel.TextAlign = ContentAlignment.MiddleRight;
             // 
             // unitsLabel
             // 
@@ -107,7 +107,6 @@
             // 
             // batchCountLabel
             // 
-            batchCountLabel.AutoSize = true;
             batchCountLabel.Font = new Font("Segoe UI", 20.25F, FontStyle.Regular, GraphicsUnit.Point);
             batchCountLabel.ForeColor = SystemColors.MenuHighlight;
             batchCountLabel.Location = new Point(83, 390);
@@ -115,6 +114,7 @@
             batchCountLabel.Size = new Size(77, 37);
             batchCountLabel.TabIndex = 7;
             batchCountLabel.Text = "9999";
+            batchCountLabel.TextAlign = ContentAlignment.MiddleRight;
             // 
             // batchSeparatorLabel
             // 
@@ -170,6 +170,7 @@
             Controls.Add(parameterNameLabel);
             Controls.Add(jobNameLabel);
             Name = "WorkDisplayForm";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Work Display";
             ResumeLayout(false);
             PerformLayout();

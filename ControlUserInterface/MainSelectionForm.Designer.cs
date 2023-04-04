@@ -47,6 +47,7 @@
             freeFormButton.TabIndex = 0;
             freeFormButton.Text = "Free Form";
             freeFormButton.UseVisualStyleBackColor = true;
+            freeFormButton.Click += freeFormButton_Click;
             // 
             // userSettingsButton
             // 
