@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ControlLibrary.Models.Messages;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO.Pipelines;
@@ -12,83 +13,78 @@ namespace ControlLibrary.Net
 {
     public class Client
     {
-        private Socket client;
+        private Socket _client;
+
+        public EventHandler<MessageModel>? ReceviedTighteningEvent;
+
+        private CancellationTokenSource _cancellationTokenSource;
 
         public Client()
         {
-            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         public async Task ConnectToController(IPEndPoint remoteEP)
         {
-            await ConnectAsync(remoteEP);
-
-            Task receive = Task.Run(() => ReceiveAndProcessasync());
-
-            await Task.WhenAll(receive);
-        }
-
-        private async Task ConnectAsync(IPEndPoint remoteEP)
-        {
             try
             {
-                await client.ConnectAsync(remoteEP);
+                await _client.ConnectAsync(remoteEP);
+
+                Pipe pipe = new Pipe();
+                Task receiving = Task.Run(() => ReceiveAsync(pipe.Writer));
+                Task processing = Task.Run(() => ProcessAsync(pipe.Reader));
+
+                await Task.WhenAll(receiving, processing);
             }
-            catch
+            catch (OperationCanceledException) { }
+            catch (Exception)
             {
-                // TODO - Handle connection exceptions
+                _cancellationTokenSource.Cancel();
+                throw;
             }
-        }
-
-        private async Task ReceiveAndProcessasync()
-        {
-            Pipe pipe = new Pipe();
-            Task receiving = ReceiveAsync(pipe.Writer);
-            Task processing = ProcessAsync(pipe.Reader);
-
-            await Task.WhenAll(receiving, processing);
+            finally
+            {
+                CloseSocket();
+            }
         }
 
         private async Task ReceiveAsync(PipeWriter writer)
         {
-            // TODO - Add CancellationToken to end async receive
-
-            // TODO - Lookup max message size and set appropriate buffer size
             // TODO - Setup better const variable, possible global if necessary
             const int bufferSize = 1024;
+            CancellationToken token = _cancellationTokenSource.Token;
 
-            while (true)
+            try
             {
-                Memory<byte> memory = writer.GetMemory(bufferSize);
-
-                try
+                while (!token.IsCancellationRequested)
                 {
-                    int bytesRead = await client.ReceiveAsync(memory, SocketFlags.None);
+                    Memory<byte> memory = writer.GetMemory(bufferSize);
+                    int bytesRead = await _client.ReceiveAsync(memory, SocketFlags.None);
                     if (bytesRead == 0)
                     {
                         break;
                     }
 
                     writer.Advance(bytesRead);
-                }
-                catch
-                {
-                    // TODO - Handle receive exceptions
-                }
 
-                FlushResult result = new FlushResult();
-                if (result.IsCompleted)
-                {
-                    break;
+                    await writer.FlushAsync();
                 }
             }
-
-            await writer.CompleteAsync();
+            catch (OperationCanceledException) { }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                await writer.CompleteAsync();
+            }
         }
 
         private async Task ProcessAsync(PipeReader reader)
         {
-            while (true)
+            while (!_cancellationTokenSource.IsCancellationRequested)
             {
                 ReadResult result = await reader.ReadAsync();
                 ReadOnlySequence<byte> buffer = result.Buffer;
@@ -132,10 +128,21 @@ namespace ControlLibrary.Net
             throw new NotImplementedException();
         }
 
-        public async Task SendAsync()
+        public async Task SendAsync(MessageModel message)
         {
-            // TODO - Need to create message model before logic to send message
-            throw new NotImplementedException();
+            byte[] byteData = message.Build();
+
+            await _client.SendAsync(byteData, SocketFlags.None);
+        }
+
+        private void CloseSocket()
+        {
+            if (_client.Connected)
+            {
+                _client.Shutdown(SocketShutdown.Both);
+            }
+
+            _client.Close();
         }
     }
 }
